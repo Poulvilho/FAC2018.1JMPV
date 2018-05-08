@@ -1,0 +1,159 @@
+# Trabalho 2
+#
+# Alunos:	160031982 - João Pedro Mota Jardim
+#		160016428 - Paulo Victor de Menezes Lopes
+.data
+
+	pedirValorA: .asciiz "Coloque o valor de A: "
+	pedirValorB: .asciiz "Coloque o valor de B: "
+	pedirValorP: .asciiz "Coloque o valor de P: "
+	mensagemErro: .asciiz "\nO modulo nao eh primo\n"
+	mensagemErroExpoente: .asciiz "\nExpoente eh negativo\n"
+	mensagemErroIndeterminacao: .asciiz "\n0 elevado a 0"
+	mensagemResultado1: .asciiz "\nA exponencial modular  "
+	mensagemResultado2: .asciiz " elevado a "
+	mensagemResultado3: .asciiz " (mod "
+	mensagemResultado4: .asciiz ") eh: "
+	
+.text
+
+main:
+
+le_inteiro:
+	# Lê o valor da variável que será elevada
+	li $v0, 4
+	la $a0, pedirValorA
+	syscall
+
+	li $v0, 5
+	syscall
+	move $s0, $v0
+
+	# Lê o valor da variável que será o expoente
+	li $v0, 4
+	la $a0, pedirValorB
+	syscall
+
+	li $v0, 5
+	syscall
+	move $s1, $v0
+
+	# Lê o valor da variável que vai modularizar
+	li $v0, 4
+	la $a0, pedirValorP
+	syscall
+
+	li $v0, 5
+	syscall
+	move $s2, $v0
+
+eh_primo:
+	# Verifica se o valor é menor que 2
+	slti $t1, $s2, 2
+	beq $t1, 1, imprime_erro_primo
+	# Se o valor for 2 ou 3, é primo
+	beq $s2, 2, calc_exp
+	beq $s2, 3, calc_exp
+	# Verifica se é divisível por 2
+	li $t0, 2
+	div $s2, $t0
+	mfhi $t1
+	beq $t1, 0, imprime_erro_primo
+	# Verifica se é divisível por 3
+	li $t0, 3
+
+incrementa:
+	# Verifica se o próximo valor é maior que a referância
+	slt $t1, $s2, $t0
+	# Se for maior ou igual, é primo, pois nenhum anterior consegue dividir
+	beq $t1, 1, calc_exp
+	beq $t0, $s2, calc_exp
+	# Dividi pelo próximo ímpar
+	div $s2, $t0
+	# Verifica se o resto é nulo, se for nulo nao é prima, se não, continua
+	mfhi $t1
+	beq $t1, 0, imprime_erro_primo
+	# Pula para próximo ímpar e continua o for
+	addi $t0, $t0, 2
+	jal incrementa
+
+calc_exp:
+	# Calcula o exponencial, verificando se expoente é negativo ou igual a 0
+	slti $t1, $s1, 0
+	beq $s1, 0, expoente_nulo
+	beq $t1, 1, imprime_erro_expoente
+	# Inicia as variáveis para o loop da exponenciação
+	move $t1, $s1
+	move $s3, $s0
+
+loop_mult:
+	beq $t1, 1, divisao_modular
+	# Multiplicacoes sequenciais
+	mult $s3, $s0
+	mflo $s3
+	subi $t1, $t1, 1
+	jal loop_mult
+
+expoente_nulo:
+	beq $s0, 0, imprime_erro_indeterminacao
+	li $s3, 1
+	jal divisao_modular
+	
+divisao_modular:
+	div $s3, $s2
+	mfhi $s3
+	jal imprime_saida
+
+imprime_saida:
+	li $v0, 4
+	la $a0, mensagemResultado1
+	syscall
+	
+	li $v0, 1
+	move $a0, $s0
+	syscall
+	
+	li $v0, 4
+	la $a0, mensagemResultado2
+	syscall
+	
+	li $v0, 1
+	move $a0, $s1
+	syscall
+	
+	li $v0, 4
+	la $a0, mensagemResultado3
+	syscall
+	
+	li $v0, 1
+	move $a0, $s2
+	syscall
+	
+	li $v0, 4
+	la $a0, mensagemResultado4
+	syscall
+	
+	li $v0, 1
+	move $a0, $s3
+	syscall
+	jal fim
+
+imprime_erro_primo:
+	li $v0, 4
+	la $a0, mensagemErro
+	syscall
+	jal fim
+
+imprime_erro_expoente:
+	li $v0, 4
+	la $a0, mensagemErroExpoente
+	syscall
+	jal fim
+
+imprime_erro_indeterminacao:
+	li $v0, 4
+	la $a0, mensagemErroIndeterminacao
+	syscall
+	jal fim
+
+fim:
