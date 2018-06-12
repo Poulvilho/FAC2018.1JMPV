@@ -59,7 +59,7 @@ eh_primo:
 	div $s2, $t0
 	mfhi $t1
 	beq $t1, 0, imprime_erro_primo
-	# Verifica se é divisível por 3
+	# carrega o comparador para ver se é divisível por 3
 	li $t0, 3
 
 incrementa:
@@ -70,10 +70,10 @@ incrementa:
 	beq $t0, $s2, calc_exp
 	# Dividi pelo próximo ímpar
 	div $s2, $t0
-	# Verifica se o resto é nulo, se for nulo nao é prima, se não, continua
+	# Verifica se o resto é nulo, se for nulo nao é prima, caso contrario, continua
 	mfhi $t1
 	beq $t1, 0, imprime_erro_primo
-	# Pula para próximo ímpar e continua o for
+	# Pula para próximo ímpar e continua o laço
 	addi $t0, $t0, 2
 	jal incrementa
 
@@ -83,16 +83,20 @@ calc_exp:
 	beq $s1, 0, expoente_nulo
 	beq $t1, 1, imprime_erro_expoente
 	# Inicia as variáveis para o loop da exponenciação
-	move $t1, $s1
+	move $t2, $s1
 	move $s3, $s0
-
-loop_mult:
+	#se o numero for maior q o primo, já realiza a divisão modular
+	slt  $t1,$s2,$s0
 	beq $t1, 1, divisao_modular
-	# Multiplicacoes sequenciais
+	
+loop_mult:
+	#beq $t2, 1, divisao_modular
+	# Multiplicação
 	mult $s3, $s0
 	mflo $s3
-	subi $t1, $t1, 1
-	jal loop_mult
+	#diminui o expoente
+	subi $t2, $t2, 1
+	j divisao_modular
 
 expoente_nulo:
 	beq $s0, 0, imprime_erro_indeterminacao
@@ -100,8 +104,12 @@ expoente_nulo:
 	jal divisao_modular
 	
 divisao_modular:
+	#realiza a divisao modular
 	div $s3, $s2
 	mfhi $s3
+	#se o expoente for igual ou maior que 2(ou seja, >1), pula pra multiplicaçao, caso contrario, imprime a saida
+	slti $t1,$t2,2
+	beq $t1,0,loop_mult
 	jal imprime_saida
 
 imprime_saida:
